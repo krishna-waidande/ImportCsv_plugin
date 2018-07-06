@@ -5,7 +5,6 @@ import com.krishagni.participantcsv.core.Record;
 import com.krishagni.participantcsv.datasource.DataSource;
 
 public class CsvFileDataSource implements DataSource {
-	
 	private CsvFileReader csvReader;
 	
 	public CsvFileDataSource(String filename) {
