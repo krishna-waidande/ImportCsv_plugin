@@ -1,4 +1,4 @@
-package com.krishagni.participantcsv.core;
+package com.krishagni.importcsv.core;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,8 +1,8 @@
-package com.krishagni.participantcsv.datasource.Impl;
+package com.krishagni.importcsv.datasource.Impl;
 
 import com.krishagni.catissueplus.core.common.util.CsvFileReader;
-import com.krishagni.participantcsv.core.Record;
-import com.krishagni.participantcsv.datasource.DataSource;
+import com.krishagni.importcsv.core.Record;
+import com.krishagni.importcsv.datasource.DataSource;
 
 public class CsvFileDataSource implements DataSource {
 	private CsvFileReader csvReader;
