@@ -9,11 +9,10 @@ import com.krishagni.participantcsv.core.ParticipantCsvImporter;
 @Controller
 @RequestMapping("/participantcsv")
 public class ParticipantCsvController {
-	
 	@Autowired
 	ParticipantCsvImporter participantCsvImporter;
 
-	@RequestMapping(method = RequestMethod.GET)
+	@RequestMapping(method = RequestMethod.POST)
 	public void importCsv() {
 			participantCsvImporter.importcsv();
 	}

@@ -1,7 +1,9 @@
 package com.krishagni.participantcsv.datasource;
 
+import com.krishagni.participantcsv.core.Record;
+
 public interface DataSource {
-	void nextRecord();
+	Record nextRecord();
 	
 	boolean hasNext();
 	

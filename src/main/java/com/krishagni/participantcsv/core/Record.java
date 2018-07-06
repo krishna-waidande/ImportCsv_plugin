@@ -4,17 +4,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Record {
-	private Map<String, Object> record = new HashMap<String, Object>();
+	private Map<String, String> record = new HashMap<String, String>();
 
-	public Map<String, Object> get() {
+	public Map<String, String> get() {
 		return record;
 	}
 	
-	public Object getValue(String column) {
+	public String getValue(String column) {
 		return record.get(column);
 	}
 	
-	public void addValue(String column, Object value) {
+	public void addValue(String column, String value) {
 		record.put(column, value);
 	}
 }
