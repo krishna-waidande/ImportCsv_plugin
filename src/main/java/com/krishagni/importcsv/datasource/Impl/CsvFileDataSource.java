@@ -16,21 +16,26 @@ public class CsvFileDataSource implements DataSource {
 		return getRecord(csvReader.getColumnNames(), csvReader.getRow());
 	}
 	
-	private Record getRecord(String[] columnNames, String[] row) {
-		Record record = new Record();
-		for (int i = 0; i <row.length; i++) {
-			record.addValue(columnNames[i], row[i]);
-		}
-		return record;
-	}
-	
 	@Override
 	public boolean hasNext() {
 		return csvReader.next();
 	}
 	
 	@Override
+	public String[] getHeader() {
+		return (csvReader.getColumnNames());
+	}
+	
+	@Override
 	public void close() {
 		csvReader.close();
+	}
+	
+	private Record getRecord(String[] columnNames, String[] row) {
+		Record record = new Record();
+		for (int i = 0; i <row.length; i++) {
+			record.addValue(columnNames[i], row[i]);
+		}
+		return record;
 	}
 }

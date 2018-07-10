@@ -8,4 +8,6 @@ public interface DataSource {
 	boolean hasNext();
 	
 	void close();
+	
+	String[] getHeader();
 }
