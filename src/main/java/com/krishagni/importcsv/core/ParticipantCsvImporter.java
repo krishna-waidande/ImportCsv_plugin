@@ -25,18 +25,18 @@ public class ParticipantCsvImporter {
 	
 	private DataSource dataSource;
 	
-	private String filename = "/home/user/Music/participant.csv";
+	private final static String FILE_NAME = "/home/user/Music/participant.csv";
 	
 	private final static Log logger = LogFactory.getLog(ParticipantCsvImporter.class);
 	
-	static int rowCount;
+	private static int rowCount;
 
 	public void importcsv() {
-		dataSource = new CsvFileDataSource(filename);
+		dataSource = new CsvFileDataSource(FILE_NAME);
 		OpenSpecimenException ose = new OpenSpecimenException(ErrorType.USER_ERROR);
 		rowCount = 0;
 		
-		if (isValideHeaders(dataSource)) {
+		if (isHeaderRowValid(dataSource)) {
 			while (dataSource.hasNext()) {
 				Record record = dataSource.nextRecord();
 				rowCount++;
@@ -60,35 +60,37 @@ public class ParticipantCsvImporter {
 		cprDetail.getParticipant().setFirstName(record.getValue("firstName"));
 		cprDetail.getParticipant().setMiddleName(record.getValue("middleName"));
 		cprDetail.getParticipant().setLastName(record.getValue("lastName"));
-		validateCpId(record.getValue("cpId"), record, cprDetail, ose);
-		validatePpID(record.getValue("ppId"), record, cprDetail, ose);
-		validateRegistrationDate(record.getValue("registrationDate"), record, cprDetail, ose);
+		setCpId(record.getValue("cpId"), cprDetail, ose);
+		setPpID(record.getValue("ppId"), cprDetail, ose);
+		setRegistrationDate(record.getValue("registrationDate"), cprDetail, ose);
 		return cprDetail;
 	}
 	
-	private void validateCpId(String value, Record record, CollectionProtocolRegistrationDetail cprDetail, OpenSpecimenException ose) {
-		if (StringUtils.isNumeric(value)) {
-			cprDetail.setCpId(Long.parseLong(record.getValue("cpId")));
+	private void setCpId(String cpId, CollectionProtocolRegistrationDetail cprDetail, OpenSpecimenException ose) {
+		if (StringUtils.isNumeric(cpId)) {
+			cprDetail.setCpId(Long.parseLong(cpId));
 			return;
 		}
-		logger.error("Invalide CP Id for record :"+ rowCount);
+		
+		logger.error("Invalid CP Id for record :"+ rowCount);
 		ose.addError(CprErrorCode.INVALID_CP_AND_PPID);
 	}
 	
-	private void validatePpID(String value, Record record, CollectionProtocolRegistrationDetail cprDetail, OpenSpecimenException ose) {
-		if (StringUtils.isNotBlank(value)) {
-			cprDetail.setPpid(record.getValue("ppId"));
+	private void setPpID(String ppId, CollectionProtocolRegistrationDetail cprDetail, OpenSpecimenException ose) {
+		if (StringUtils.isNotBlank(ppId)) {
+			cprDetail.setPpid(ppId);
 			return;
 		}
-		logger.error("Invalide pp Id for record :"+ rowCount);
+		
+		logger.error("Invalid pp Id for record :"+ rowCount);
 		ose.addError(CprErrorCode.INVALID_CP_AND_PPID);
 	}
 
-	private void validateRegistrationDate(String value, Record record, CollectionProtocolRegistrationDetail cprDetail, OpenSpecimenException ose) {
-		if(StringUtils.isNotBlank(value)) {
-			SimpleDateFormat sdf = new SimpleDateFormat("dd/mm/yyyy");
+	private void setRegistrationDate(String registrationDate, CollectionProtocolRegistrationDetail cprDetail, OpenSpecimenException ose) {
+		if(StringUtils.isNotBlank(registrationDate)) {
+			SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
 			try {
-				 cprDetail.setRegistrationDate(sdf.parse(value.toString()));
+				 cprDetail.setRegistrationDate(sdf.parse(registrationDate));
 				 return;
 			} catch (ParseException e) {
 				logger.error("Error while parsing the date of record :"+ rowCount);
@@ -96,22 +98,23 @@ public class ParticipantCsvImporter {
 				return;
 			}
 		}
+		
 		logger.error("Registration date is required :"+ rowCount);
 		ose.addError(CprErrorCode.REG_DATE_REQUIRED);
 	}
 	
-	private boolean isValideHeaders(DataSource dataSource) {
-		String[] header = dataSource.getHeader();
-		List<String> headers = new ArrayList<String>();
-		headers.add("firstName");
-		headers.add("middleName");
-		headers.add("lastName");
-		headers.add("cpId");
-		headers.add("ppId");
-		headers.add("registrationDate");
+	private boolean isHeaderRowValid(DataSource dataSource) {
+		String[] csvHeaderRow = dataSource.getHeader();
+		List<String> expectedHeader = new ArrayList<String>();
+		expectedHeader.add("firstName");
+		expectedHeader.add("middleName");
+		expectedHeader.add("lastName");
+		expectedHeader.add("cpId");
+		expectedHeader.add("ppId");
+		expectedHeader.add("registrationDate");
 		
-		for (int i=0; i < header.length ; i++) {
-			if (!headers.contains(header[i])) {
+		for (int i=0; i < csvHeaderRow.length ; i++) {
+			if (!expectedHeader.contains(csvHeaderRow[i])) {
 				return false;
 			}
 		}
