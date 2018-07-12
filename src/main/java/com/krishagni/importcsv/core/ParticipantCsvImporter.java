@@ -20,34 +20,38 @@ import com.krishagni.importcsv.datasource.DataSource;
 import com.krishagni.importcsv.datasource.Impl.CsvFileDataSource;
 
 public class ParticipantCsvImporter {
+	private final static String FILE_NAME = "/home/user/Music/participant.csv";
+	
+	private final static String DATE_FORMAT = "MM/dd/yyyy";
+	
+	private final static Log logger = LogFactory.getLog(ParticipantCsvImporter.class);
+	
 	@Autowired
 	private CollectionProtocolRegistrationService cprSvc;
 	
 	private DataSource dataSource;
 	
-	private final static String FILE_NAME = "/home/user/Music/participant.csv";
-	
-	private final static Log logger = LogFactory.getLog(ParticipantCsvImporter.class);
-	
-	private static int rowCount;
+	private int rowCount;
 
-	public void importcsv() {
+	public void importCsv() {
 		dataSource = new CsvFileDataSource(FILE_NAME);
 		OpenSpecimenException ose = new OpenSpecimenException(ErrorType.USER_ERROR);
 		rowCount = 0;
-		
-		if (isHeaderRowValid(dataSource)) {
+		try {
+			isHeaderRowValid(dataSource); 
 			while (dataSource.hasNext()) {
 				Record record = dataSource.nextRecord();
 				rowCount++;
 				cprSvc.createRegistration(new RequestEvent<CollectionProtocolRegistrationDetail>(getCPRDetail(record, ose)));
 			}
-		} else {
-			logger.error("Headers of csv file not matched");
-			ose.addError(ImportJobErrorCode.RECORD_PARSE_ERROR); 
+		} catch (Exception e) {
+			logger.error("Error while parsing csv file : " + e.getMessage());
+		} finally {
+			if (dataSource != null) {
+				dataSource.close();
+			}
+			ose.checkAndThrow();
 		}
-		ose.checkAndThrow();
-		dataSource.close();
 	}
 	
 	private CollectionProtocolRegistrationDetail getCPRDetail(Record record, OpenSpecimenException ose) {
@@ -87,10 +91,10 @@ public class ParticipantCsvImporter {
 	}
 
 	private void setRegistrationDate(String registrationDate, CollectionProtocolRegistrationDetail cprDetail, OpenSpecimenException ose) {
-		if(StringUtils.isNotBlank(registrationDate)) {
-			SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+		if (StringUtils.isNotBlank(registrationDate)) {
+			SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_FORMAT);
 			try {
-				 cprDetail.setRegistrationDate(sdf.parse(registrationDate));
+				 cprDetail.setRegistrationDate(simpleDateFormat.parse(registrationDate));
 				 return;
 			} catch (ParseException e) {
 				logger.error("Error while parsing the date of record :"+ rowCount);
@@ -103,7 +107,7 @@ public class ParticipantCsvImporter {
 		ose.addError(CprErrorCode.REG_DATE_REQUIRED);
 	}
 	
-	private boolean isHeaderRowValid(DataSource dataSource) {
+	private void isHeaderRowValid(DataSource dataSource) throws Exception {
 		String[] csvHeaderRow = dataSource.getHeader();
 		List<String> expectedHeader = new ArrayList<String>();
 		expectedHeader.add("firstName");
@@ -112,12 +116,11 @@ public class ParticipantCsvImporter {
 		expectedHeader.add("cpId");
 		expectedHeader.add("ppId");
 		expectedHeader.add("registrationDate");
-		
-		for (int i=0; i < csvHeaderRow.length ; i++) {
-			if (!expectedHeader.contains(csvHeaderRow[i])) {
-				return false;
+
+		for (String header : csvHeaderRow) {
+			if (!expectedHeader.contains(header)) {
+				throw new Exception("Headers of csv file not matched");
 			}
 		}
-		return true;	
 	}
 }

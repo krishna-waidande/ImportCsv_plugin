@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import com.krishagni.importcsv.core.ParticipantCsvImporter;
 
 @Controller
-@RequestMapping("/participantcsv")
+@RequestMapping("/importparticipantcsv")
 public class ParticipantCsvController {
 	@Autowired
 	ParticipantCsvImporter participantCsvImporter;
@@ -19,6 +19,6 @@ public class ParticipantCsvController {
 	@ResponseStatus(HttpStatus.OK)
 	@ResponseBody
 	public void importCsv() {
-		participantCsvImporter.importcsv();
+		participantCsvImporter.importCsv();
 	}
 }
