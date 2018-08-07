@@ -38,19 +38,36 @@ public class ParticipantCsvImporter {
 		OpenSpecimenException ose = new OpenSpecimenException(ErrorType.USER_ERROR);
 		rowCount = 0;
 		try {
-			isHeaderRowValid(dataSource); 
-			while (dataSource.hasNext()) {
-				Record record = dataSource.nextRecord();
-				rowCount++;
-				cprSvc.createRegistration(new RequestEvent<CollectionProtocolRegistrationDetail>(getCPRDetail(record, ose)));
-			}
+		    isHeaderRowValid(dataSource); 
+		    while (dataSource.hasNext()) {
+			Record record = dataSource.nextRecord();
+			rowCount++;
+			cprSvc.createRegistration(new RequestEvent<CollectionProtocolRegistrationDetail>(getCPRDetail(record, ose)));
+		    }
 		} catch (Exception e) {
-			logger.error("Error while parsing csv file : " + e.getMessage());
+		    logger.error("Error while parsing csv file : " + e.getMessage());
 		} finally {
-			if (dataSource != null) {
-				dataSource.close();
+		    if (dataSource != null) {
+			dataSource.close();
+		    }
+		    ose.checkAndThrow();
+		}
+	}
+	
+	private void isHeaderRowValid(DataSource dataSource) throws Exception {
+		String[] csvHeaderRow = dataSource.getHeader();
+		List<String> expectedHeader = new ArrayList<String>();
+		expectedHeader.add("firstName");
+		expectedHeader.add("middleName");
+		expectedHeader.add("lastName");
+		expectedHeader.add("cpId");
+		expectedHeader.add("ppId");
+		expectedHeader.add("registrationDate");
+
+		for (String header : csvHeaderRow) {
+			if (!expectedHeader.contains(header)) {
+				throw new Exception("Headers of csv file does not match");
 			}
-			ose.checkAndThrow();
 		}
 	}
 	
@@ -76,7 +93,7 @@ public class ParticipantCsvImporter {
 			return;
 		}
 		
-		logger.error("Invalid CP Id for record :"+ rowCount);
+		logger.error("Invalid CPId at row :" + rowCount);
 		ose.addError(CprErrorCode.INVALID_CP_AND_PPID);
 	}
 	
@@ -86,7 +103,7 @@ public class ParticipantCsvImporter {
 			return;
 		}
 		
-		logger.error("Invalid pp Id for record :"+ rowCount);
+		logger.error("Invalid PPId at row :" + rowCount);
 		ose.addError(CprErrorCode.INVALID_CP_AND_PPID);
 	}
 
@@ -94,33 +111,16 @@ public class ParticipantCsvImporter {
 		if (StringUtils.isNotBlank(registrationDate)) {
 			SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_FORMAT);
 			try {
-				 cprDetail.setRegistrationDate(simpleDateFormat.parse(registrationDate));
-				 return;
+			    cprDetail.setRegistrationDate(simpleDateFormat.parse(registrationDate));
+			    return;
 			} catch (ParseException e) {
-				logger.error("Error while parsing the date of record :"+ rowCount);
-				ose.addError(ImportJobErrorCode.RECORD_PARSE_ERROR);
-				return;
+			    logger.error("Error while parsing the date at row :" + rowCount);
+			    ose.addError(ImportJobErrorCode.RECORD_PARSE_ERROR);
+			    return;
 			}
 		}
 		
-		logger.error("Registration date is required :"+ rowCount);
+		logger.error("Registration date is required at row :" + rowCount);
 		ose.addError(CprErrorCode.REG_DATE_REQUIRED);
-	}
-	
-	private void isHeaderRowValid(DataSource dataSource) throws Exception {
-		String[] csvHeaderRow = dataSource.getHeader();
-		List<String> expectedHeader = new ArrayList<String>();
-		expectedHeader.add("firstName");
-		expectedHeader.add("middleName");
-		expectedHeader.add("lastName");
-		expectedHeader.add("cpId");
-		expectedHeader.add("ppId");
-		expectedHeader.add("registrationDate");
-
-		for (String header : csvHeaderRow) {
-			if (!expectedHeader.contains(header)) {
-				throw new Exception("Headers of csv file not matched");
-			}
-		}
 	}
 }
