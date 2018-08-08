@@ -7,18 +7,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
-import com.krishagni.importcsv.core.ParticipantCsvImporter;
+import com.krishagni.importcsv.core.CsvImporter;
 
 @Controller
-@RequestMapping("/importParticipantCsv")
-public class ParticipantCsvController {
+@RequestMapping("/importCsv")
+public class CsvController {
 	@Autowired
-	ParticipantCsvImporter participantCsvImporter;
+	CsvImporter CsvImporter;
 
 	@RequestMapping(method = RequestMethod.POST)
 	@ResponseStatus(HttpStatus.OK)
 	@ResponseBody
 	public void importCsv() {
-		participantCsvImporter.importCsv();
+		CsvImporter.importCsv();
 	}
 }

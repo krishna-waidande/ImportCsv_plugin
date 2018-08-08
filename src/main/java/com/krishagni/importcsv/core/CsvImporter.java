@@ -11,7 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.krishagni.catissueplus.core.biospecimen.domain.factory.CprErrorCode;
 import com.krishagni.catissueplus.core.biospecimen.events.CollectionProtocolRegistrationDetail;
 import com.krishagni.catissueplus.core.biospecimen.events.ParticipantDetail;
+import com.krishagni.catissueplus.core.biospecimen.events.VisitDetail;
 import com.krishagni.catissueplus.core.biospecimen.services.CollectionProtocolRegistrationService;
+import com.krishagni.catissueplus.core.biospecimen.services.VisitService;
 import com.krishagni.catissueplus.core.common.errors.ErrorType;
 import com.krishagni.catissueplus.core.common.errors.OpenSpecimenException;
 import com.krishagni.catissueplus.core.common.events.RequestEvent;
@@ -19,15 +21,18 @@ import com.krishagni.catissueplus.core.importer.domain.ImportJobErrorCode;
 import com.krishagni.importcsv.datasource.DataSource;
 import com.krishagni.importcsv.datasource.Impl.CsvFileDataSource;
 
-public class ParticipantCsvImporter {
+public class CsvImporter {
 	private final static String FILE_NAME = "/home/user/Music/participant.csv";
 	
 	private final static String DATE_FORMAT = "MM/dd/yyyy";
 	
-	private final static Log logger = LogFactory.getLog(ParticipantCsvImporter.class);
+	private final static Log logger = LogFactory.getLog(CsvImporter.class);
 	
 	@Autowired
 	private CollectionProtocolRegistrationService cprSvc;
+	
+	@Autowired
+	private VisitService visitService;
 	
 	private DataSource dataSource;
 	
@@ -40,15 +45,17 @@ public class ParticipantCsvImporter {
 		try {
 		    isHeaderRowValid(dataSource); 
 		    while (dataSource.hasNext()) {
-			Record record = dataSource.nextRecord();
-			rowCount++;
-			cprSvc.createRegistration(new RequestEvent<CollectionProtocolRegistrationDetail>(getCPRDetail(record, ose)));
+		    	Record record = dataSource.nextRecord();
+		    	rowCount++;
+		    	CollectionProtocolRegistrationDetail cprd = getCPRDetail(record, ose);
+		    	cprSvc.createRegistration(new RequestEvent<CollectionProtocolRegistrationDetail>(cprd));
+		    	visitService.addVisit(new RequestEvent<VisitDetail>(getVisitDetail(record, cprd)));
 		    }
 		} catch (Exception e) {
 		    logger.error("Error while parsing csv file : " + e.getMessage());
 		} finally {
 		    if (dataSource != null) {
-			dataSource.close();
+		    dataSource.close();
 		    }
 		    ose.checkAndThrow();
 		}
@@ -63,6 +70,8 @@ public class ParticipantCsvImporter {
 		expectedHeader.add("cpId");
 		expectedHeader.add("ppId");
 		expectedHeader.add("registrationDate");
+		expectedHeader.add("name");
+		expectedHeader.add("site");
 
 		for (String header : csvHeaderRow) {
 			if (!expectedHeader.contains(header)) {
@@ -85,6 +94,15 @@ public class ParticipantCsvImporter {
 		setPpID(record.getValue("ppId"), cprDetail, ose);
 		setRegistrationDate(record.getValue("registrationDate"), cprDetail, ose);
 		return cprDetail;
+	}
+	
+	private VisitDetail getVisitDetail(Record record, CollectionProtocolRegistrationDetail cprd) {
+		VisitDetail visitDetail = new VisitDetail();
+		visitDetail.setCpId(cprd.getCpId());
+		visitDetail.setPpid(cprd.getPpid());
+		visitDetail.setName(record.getValue("name"));
+		visitDetail.setSite(record.getValue("site"));
+		return visitDetail;
 	}
 	
 	private void setCpId(String cpId, CollectionProtocolRegistrationDetail cprDetail, OpenSpecimenException ose) {
